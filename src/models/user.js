@@ -1,79 +1,86 @@
-import { hashPassword, checkPassword } from '../utils/crypto'
+import { hashPassword, checkPassword } from '../utils/crypto';
 
 export default (sequelize, DataTypes) => {
   const schema = {
     username: {
       unique: true,
       allowNull: false,
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     firstName: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     lastName: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     email: {
       allowNull: false,
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     phone: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     password: {
       allowNull: false,
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     role: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING
     },
     googleConnection: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSON
     },
     facebookConnection: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSON
     },
     twitterConnection: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSON
     },
     tiktokConnection: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSON
+    },
+    orgId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Organizations',
+        key: 'id'
+      }
     },
     createdAt: {
       allowNull: false,
-      type: DataTypes.DATE,
+      type: DataTypes.DATE
     },
     updatedAt: {
       allowNull: false,
-      type: DataTypes.DATE,
-    },
-  }
+      type: DataTypes.DATE
+    }
+  };
 
-  const userModel = sequelize.define('User', schema, { paranoid: true })
+  const userModel = sequelize.define('User', schema, { paranoid: true });
 
   userModel.authenticate = async (username, plainPassword) => {
-    const user = await userModel.findOne({ where: { username }, raw: true })
+    const user = await userModel.findOne({ where: { username }, raw: true });
     if (!user) {
-      return null
+      return null;
     }
-    const isPasswordCorrect = await checkPassword(plainPassword, user.password)
+    const isPasswordCorrect = await checkPassword(plainPassword, user.password);
     if (isPasswordCorrect) {
-      user.password = undefined
-      return user
+      user.password = undefined;
+      return user;
     } else {
-      return null
+      return null;
     }
-  }
+  };
 
   userModel.prototype.toJSON = function () {
-    var values = Object.assign({}, this.get())
+    var values = Object.assign({}, this.get());
 
-    delete values.password
-    return values
-  }
+    delete values.password;
+    return values;
+  };
 
-  return userModel
-}
+  return userModel;
+};
