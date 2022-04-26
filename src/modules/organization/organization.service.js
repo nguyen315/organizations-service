@@ -11,3 +11,7 @@ export const getMembersByOrgId = async (orgId) => {
 
   return users;
 };
+
+export const removeMember = async (res, orgId, userId) => {
+  
+}

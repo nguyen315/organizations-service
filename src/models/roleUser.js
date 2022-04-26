@@ -1,12 +1,5 @@
-import { hashPassword, checkPassword } from '../utils/crypto';
-
 export default (sequelize, DataTypes) => {
   const schema = {
-    name: {
-      unique: true,
-      allowNull: false,
-      type: DataTypes.STRING
-    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -15,8 +8,13 @@ export default (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    status: {
-      type: DataTypes.STRING
+    roleId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Roles',
+        key: 'id'
+      }
     },
     createdAt: {
       allowNull: false,
@@ -25,14 +23,10 @@ export default (sequelize, DataTypes) => {
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE
-    },
-    deletedAt: {
-      allow: true,
-      type: DataTypes.DATE
     }
   };
 
-  const orgModel = sequelize.define('Organization', schema, { paranoid: true });
+  const roleUserModel = sequelize.define('RoleUser', schema);
 
-  return orgModel;
+  return roleUserModel;
 };

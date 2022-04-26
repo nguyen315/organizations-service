@@ -38,8 +38,18 @@ fs.readdirSync(__dirname)
   });
 
 db.Organization.hasMany(db.User, { foreignKey: 'orgId' });
+db.Organization.hasMany(db.Role, { foreignKey: 'orgId' });
+db.Organization.belongsTo(db.User, { foreignKey: 'userId' });
 
+db.Role.belongsTo(db.Organization, { foreignKey: 'orgId' });
+db.Role.hasMany(db.RoleUser, { foreignKey: 'roleId' });
+
+db.RoleUser.belongsTo(db.User, { foreignKey: 'userId' });
+db.RoleUser.belongsTo(db.Role, { foreignKey: 'roleId' });
+
+db.User.hasOne(db.Organization, { foreignKey: 'userId' });
 db.User.belongsTo(db.Organization, { foreignKey: 'orgId' });
+db.User.hasMany(db.RoleUser, { foreignKey: 'userId' });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
