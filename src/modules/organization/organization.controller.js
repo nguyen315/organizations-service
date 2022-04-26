@@ -98,3 +98,52 @@ export const createOrUpdateRole = async (req, res) => {
   }
   return res.status(StatusCodes.CREATED).json({ message: `Create role ${roleName} success` });
 };
+
+export const getRolesByOrgId = async (req, res) => {
+  const { orgId } = req.params;
+
+  const roles = await db.Role.findAll({
+    where: { orgId },
+    raw: true
+  }).catch((err) => {
+    debug.log(NAMESPACE, 'Error while get roles by org id', err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+  });
+
+  return res.status(StatusCodes.OK).json({ roles });
+};
+
+export const getOrgById = async (req, res) => {
+  const { orgId } = req.params;
+
+  const org = await db.Organization.findByPk(orgId, { raw: true }).catch((err) => {
+    debug.log(NAMESPACE, 'Error while get org by org id', err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+  });
+  return res.status(StatusCodes.OK).json({ org });
+};
+
+export const deleteRole = async (req, res) => {
+  const { orgId, roleId } = req.params;
+
+  // TODO: Check roles user before start action
+
+  await db.Role.destroy({ where: { orgId, id: roleId } }).catch((err) => {
+    debug.log(NAMESPACE, 'Error while delete role', err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+  });
+  return res.status(StatusCodes.OK);
+};
+
+export const getOrByUserId = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await db.User.findByPk(userId, { raw: true });
+    const orgOfUser = await db.Organization.findByPk(user.orgId, { raw: true });
+    return res.status(StatusCodes.OK).json({ org: orgOfUser });
+  } catch (err) {
+    debug.log(NAMESPACE, err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
