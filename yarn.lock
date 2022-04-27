@@ -4520,20 +4520,20 @@ redis-parser@^3.0.0:
   dependencies:
     redis-errors "^1.0.0"
 
-redis-smq-monitor@6.5.5:
-  version "6.5.5"
-  resolved "https://registry.yarnpkg.com/redis-smq-monitor/-/redis-smq-monitor-6.5.5.tgz#9886190b57b01a296c086483b3552226bb2a39b1"
-  integrity sha512-UkjmZFEGQeeeK/HycVhdWf2BotynNlBzOOQFTKIRL+ZZfgvPTDxCiCM4h9uJ2c5hMVrZ5Bsy700l9EyXDhd3Pg==
+redis-smq-monitor@6.5.6:
+  version "6.5.6"
+  resolved "https://registry.yarnpkg.com/redis-smq-monitor/-/redis-smq-monitor-6.5.6.tgz#4ea4abd692b7ceae497d251112355af0688479c9"
+  integrity sha512-ryg6VTfVx2So3SCHPlr0wcf1vwjaFrwIrWbDjWgdVU9iEy2BI0dzaw23FyWzxhzySYR9n7aEHjxhM3qgaqKmpg==
   dependencies:
     "@types/ejs" "3.1.0"
     ejs "3.1.6"
     koa "2.13.1"
     koa-send "5.0.1"
 
-redis-smq@^6.4.1:
-  version "6.4.1"
-  resolved "https://registry.yarnpkg.com/redis-smq/-/redis-smq-6.4.1.tgz#4d6565f4bf82b7cc951253055607b0165b6b876c"
-  integrity sha512-aqllGlMA/UHU1IiDlizXzigPNevYzYOKMsZSb8oumTrHcJsRLLvCyb4C0eudZuMQXj149JJTvwzjkQ+c7rOKTQ==
+redis-smq@^6.4.2:
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/redis-smq/-/redis-smq-6.4.2.tgz#6fb0436ab0963695071eacbe89858bc31cc8ad21"
+  integrity sha512-TIYkr+1ozfmcI0OuyilmC9sVybnpYwTw6CA5ApF6H7W7jJlF0lr2tKWmrr3JK1sVPjoX2AlgbSZ15CrFUn+pHQ==
   dependencies:
     "@koa/cors" "3.1.0"
     "@koa/router" "10.1.1"
@@ -4551,7 +4551,7 @@ redis-smq@^6.4.1:
     koa-bodyparser "4.3.0"
     lodash "4.17.21"
     redis "3.1.2"
-    redis-smq-monitor "6.5.5"
+    redis-smq-monitor "6.5.6"
     reflect-metadata "0.1.13"
     socket.io "4.2.0"
     stoppable "1.1.0"
