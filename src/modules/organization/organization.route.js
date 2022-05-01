@@ -12,4 +12,7 @@ router.get('/:orgId', orgCtrl.getOrgById);
 router.delete('/:orgId/roles/:roleId', orgCtrl.deleteRole);
 router.get('/:userId', orgCtrl.getOrByUserId);
 
+router.post('/invite', orgCtrl.inviteUser);
+router.post('/verify', orgCtrl.verifyUser);
+
 export default router;

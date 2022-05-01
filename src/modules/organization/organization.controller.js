@@ -1,9 +1,11 @@
-import { MESSAGE } from 'src/shared/message';
 import { StatusCodes } from 'http-status-codes';
 import debug from 'src/utils/debug';
 import db from 'src/models';
 import * as orgService from './organization.service';
+import * as mailService from 'src/utils/mailer';
 import { isNumber } from 'lodash';
+import jwt from 'jsonwebtoken';
+import { Op } from 'sequelize';
 
 const NAMESPACE = 'ORG-CTRL';
 
@@ -146,4 +148,76 @@ export const getOrByUserId = async (req, res) => {
     debug.log(NAMESPACE, err);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
   }
+};
+
+export const inviteUser = async (req, res) => {
+  const { user, org, email: userEmail } = req.body;
+  // TODO: invite user with role
+
+  if (!org) {
+    res.status(httpStatusCodes.BAD_REQUEST).send({ message: 'Organization does not exist' });
+  }
+
+  const invitingUser = await db.User.findOne({
+    where: {
+      email: userEmail
+    }
+  });
+
+  if (!invitingUser) {
+    // Invite an user not exist in system
+    const token = jwt.sign({ email: userEmail, orgId: org.id }, process.env.INVITE_SECRET);
+    const url = `${process.env.FRONTEND_URL}/verify?token=${token}`;
+    const emailHtmlTemplate = mailService.generateInviteTemplate(url, org);
+    mailService.sendMailWithHtml(
+      'Omini Channel Invite To Organization',
+      userEmail,
+      emailHtmlTemplate
+    );
+    return res.status(StatusCodes.OK).send({ message: 'Invite user success.' });
+  }
+
+  // Invite an user already exist
+  const isUserExistInOrg = await db.User.count({
+    where: {
+      id: invitingUser.id,
+      orgId: org.id
+    }
+  });
+  if (isUserExistInOrg) {
+    return res
+      .status(httpStatusCodes.BAD_REQUEST)
+      .send({ message: 'User is already in organization.' });
+  }
+
+  // Check if user in another org
+  const isUserInAnotherOrg = await db.User.count({
+    where: {
+      id: invitingUser.id,
+      orgId: {
+        [Op.ne]: org.id
+      }
+    }
+  });
+  if (isUserInAnotherOrg) {
+    return res
+      .status(httpStatusCodes.BAD_REQUEST)
+      .send({ message: 'User is already in another org.' });
+  }
+
+  // Invite user to org
+  const token = jwt.sign({ email: userEmail, orgId: org.id }, process.env.INVITE_SECRET);
+  const url = `${process.env.FRONTEND_URL}/verify?token=${token}`;
+  const emailHtmlTemplate = mailService.generateInviteTemplate(url, org);
+  mailService.sendMailWithHtml(
+    'Omini Channel Invite To Organization',
+    userEmail,
+    emailHtmlTemplate
+  );
+  return res.status(StatusCodes.OK).send({ message: 'Invite user success.' });
+};
+
+export const verifyUser = async (req, res) => {
+  const { token } = req.body;
+  const { email, orgId } = jwt.verify(token, process.env.INVITE_SECRET);
 };
