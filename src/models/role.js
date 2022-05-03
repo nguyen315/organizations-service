@@ -4,35 +4,35 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'Organizations',
-        key: 'id'
-      }
+        model: "Organizations",
+        key: "id",
+      },
     },
     name: {
       unique: true,
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
     },
     status: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
     },
     permissions: {
-      type: DataTypes.JSON
+      type: DataTypes.JSON,
+    },
+    predefine: {
+      type: DataTypes.BOOLEAN,
     },
     createdAt: {
       allowNull: false,
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
     },
     updatedAt: {
       allowNull: false,
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
     },
-    deletedAt: {
-      type: DataTypes.DATE
-    }
   };
 
-  const roleModel = sequelize.define('Role', schema, { paranoid: true });
+  const roleModel = sequelize.define("Role", schema);
 
   return roleModel;
 };
