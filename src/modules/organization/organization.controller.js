@@ -1,11 +1,13 @@
-import { StatusCodes } from "http-status-codes";
-import { isNumber } from "lodash";
-import db from "src/models";
-import { ORG_STATUS } from "src/shared/constant";
-import debug from "src/utils/debug";
-import * as orgService from "./organization.service";
+import { StatusCodes } from 'http-status-codes';
+import debug from 'src/utils/debug';
+import db from 'src/models';
+import * as orgService from './organization.service';
+import * as mailService from 'src/utils/mailer';
+import { isNumber } from 'lodash';
+import jwt from 'jsonwebtoken';
+import { Op } from 'sequelize';
 
-const NAMESPACE = "ORG-CTRL";
+const NAMESPACE = 'ORG-CTRL';
 
 export const getMembersByOrgId = async (req, res) => {
   try {
@@ -15,7 +17,7 @@ export const getMembersByOrgId = async (req, res) => {
 
     res.json(users);
   } catch (err) {
-    debug.log(NAMESPACE, "Error while getting users of org " + orgId, err);
+    debug.log(NAMESPACE, 'Error while getting users of org ' + orgId, err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };
@@ -25,7 +27,7 @@ export const createNewOrg = async (req, res) => {
     const { user } = req.body;
 
     await orgService.createNewOrg(user);
-    return res.status(StatusCodes.OK).send("OK");
+    return res.status(StatusCodes.OK).send('OK');
   } catch (err) {
     debug.log(NAMESPACE, err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
@@ -40,26 +42,22 @@ export const removeMember = async (req, res) => {
 
   // Prevent remove org owner
   if (user.id === memberId) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Can not remove org owner" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Can not remove org owner' });
   }
 
   // Check if user exist in org
   try {
     const removingUser = await db.User.findByPk(memberId, { raw: true });
     if (+removingUser.orgId !== +orgId) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "User not exist in org" });
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User not exist in org' });
     }
 
     await db.User.update({ orgId: null }, { where: { id: memberId } });
     return res.status(StatusCodes.OK).json({
-      message: `Remove user ${removingUser.firstName} ${removingUser.lastName} successfully.`,
+      message: `Remove user ${removingUser.firstName} ${removingUser.lastName} successfully.`
     });
   } catch (err) {
-    debug.log(NAMESPACE, "Error while remove member", err);
+    debug.log(NAMESPACE, 'Error while remove member', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };
@@ -73,29 +71,25 @@ export const updateRoleForMember = async (req, res) => {
   // check if user role already exist
   try {
     const countRoleUser = await db.RoleUser.count({
-      where: { userId: memberId, roleId },
+      where: { userId: memberId, roleId }
     });
     if (countRoleUser === 0)
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "User role already exist" });
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User role already exist' });
 
     await db.RoleUser.create({ userId: memberId, roleId });
   } catch (err) {
-    debug.log(NAMESPACE, "Error while update user role", err);
+    debug.log(NAMESPACE, 'Error while update user role', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 
-  return res
-    .status(StatusCodes.OK)
-    .json({ message: `Update user role success` });
+  return res.status(StatusCodes.OK).json({ message: `Update user role success` });
 };
 
 export const createOrUpdateRole = async (req, res) => {
   const { orgId } = req.params;
   const {
     user,
-    role: { id, name: roleName, permissions, assigned },
+    role: { id, name: roleName, permissions, assigned }
   } = req.body;
 
   // TODO: Check user permission before action
@@ -111,10 +105,8 @@ export const createOrUpdateRole = async (req, res) => {
       );
     } catch (err) {
       console.log(err);
-      debug.log(NAMESPACE, "Name of roles must be unique", err);
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "Name of roles must be unique" });
+      debug.log(NAMESPACE, 'Name of roles must be unique', err);
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Name of roles must be unique' });
     }
     return res
       .status(StatusCodes.CREATED)
@@ -127,17 +119,15 @@ export const createOrUpdateRole = async (req, res) => {
       name: roleName,
       permissions,
       orgId,
-      status: ORG_STATUS.ENABLE,
+      status: ORG_STATUS.ENABLE
     });
     const newRole = res.get({ plain: true });
     await orgService.assignRoleToMembers(newRole.id, assigned);
   } catch (err) {
-    debug.log(NAMESPACE, "Error while create role", err);
+    debug.log(NAMESPACE, 'Error while create role', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
-  return res
-    .status(StatusCodes.CREATED)
-    .json({ message: `Create role ${roleName} success` });
+  return res.status(StatusCodes.CREATED).json({ message: `Create role ${roleName} success` });
 };
 
 export const getRolesByOrgId = async (req, res) => {
@@ -148,7 +138,7 @@ export const getRolesByOrgId = async (req, res) => {
 
     return res.status(StatusCodes.OK).json(roles);
   } catch (err) {
-    debug.log(NAMESPACE, "Error while get roles by org id", err);
+    debug.log(NAMESPACE, 'Error while get roles by org id', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };
@@ -160,7 +150,7 @@ export const getOrgById = async (req, res) => {
     const org = await orgService.getOrgById(orgId);
     return res.status(StatusCodes.OK).json({ org });
   } catch (err) {
-    debug.log(NAMESPACE, "Error while get org by id", err);
+    debug.log(NAMESPACE, 'Error while get org by id', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };
@@ -173,7 +163,7 @@ export const deleteRole = async (req, res) => {
     await db.Role.destroy({ where: { orgId, id: roleId } });
     return res.status(StatusCodes.OK).send();
   } catch (err) {
-    debug.log(NAMESPACE, "Error while delete role", err);
+    debug.log(NAMESPACE, 'Error while delete role', err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };
@@ -210,11 +200,7 @@ export const checkPermission = async (req, res) => {
   const { permissions } = req.body;
 
   try {
-    const isValid = await orgService.checkPermission(
-      memberId,
-      orgId,
-      permissions
-    );
+    const isValid = await orgService.checkPermission(memberId, orgId, permissions);
     if (isValid) {
       return res.status(StatusCodes.OK).json(isValid);
     }
@@ -234,7 +220,7 @@ export const assignRole = async (req, res) => {
 
   try {
     await orgService.assignRoleToMember(roleId, memberId);
-    return res.status(StatusCodes.OK).json("OK");
+    return res.status(StatusCodes.OK).json('OK');
   } catch (err) {
     debug.log(NAMESPACE, err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
@@ -246,9 +232,36 @@ export const unassignRole = async (req, res) => {
 
   try {
     await orgService.unassignRoleFromMember(roleId, memberId);
-    return res.status(StatusCodes.OK).json("OK");
+    return res.status(StatusCodes.OK).json('OK');
   } catch (err) {
     debug.log(NAMESPACE, err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
+};
+
+export const inviteUser = async (req, res) => {
+  const { user, email: userEmail } = req.body;
+  const { orgId } = req.params;
+  // TODO: Check permission before fire action
+  // TODO: invite user with role
+
+  if (!orgId) {
+    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Organization does not exist' });
+  }
+  if (!userEmail) {
+    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'invalid email' });
+  }
+
+  await orgService.inviteUser(userEmail, orgId, res).catch((err) => {
+    debug.log(NAMESPACE, err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+  });
+};
+
+export const verifyUser = async (req, res) => {
+  const { user, token } = req.body;
+  await orgService.verifyUser(user, token, res).catch((err) => {
+    debug.log(NAMESPACE, err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+  });
 };
