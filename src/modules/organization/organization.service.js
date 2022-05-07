@@ -259,6 +259,16 @@ export const verifyUser = async (loggedUser, token, res) => {
 
   await db.User.update({ orgId }, { where: { email: userEmail } });
 
+  // assign role MEMBER to user
+  const roleMember = await db.Role.findOne({
+    orgId,
+    name: 'MEMBER',
+    status: ORG_STATUS.ENABLE
+  });
+  if (roleMember) {
+    await assignRoleToMember(roleMember.id, invitingUser.id);
+  }
+
   return res.status(StatusCodes.OK).send({ message: 'Joining organization success.' });
 };
 
