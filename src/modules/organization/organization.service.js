@@ -1,29 +1,21 @@
-import { get, isNil, pick } from "lodash";
-import db from "src/models";
-import {
-  ADMIN_PERMISSION,
-  MEMBER_PERMISSION,
-  ORG_STATUS,
-} from "src/shared/constant";
-import debug from "src/utils/debug";
+import { isNil, pick } from 'lodash';
+import { StatusCodes } from 'http-status-codes';
+import db from 'src/models';
+import { ADMIN_PERMISSION, MEMBER_PERMISSION, ORG_STATUS } from 'src/shared/constant';
+import debug from 'src/utils/debug';
+import { Op } from 'sequelize';
+import jwt from 'jsonwebtoken';
+import * as mailService from 'src/utils/mailer';
 
-const NAMESPACE = "ORG-SERVICE";
+const NAMESPACE = 'ORG-SERVICE';
 
 export const getMembersByOrgId = async (orgId) => {
   const users = await db.User.findAll({
     where: {
-      orgId,
+      orgId
     },
-    attributes: [
-      "id",
-      "username",
-      "firstName",
-      "lastName",
-      "email",
-      "phone",
-      "status",
-    ],
-    raw: true,
+    attributes: ['id', 'username', 'firstName', 'lastName', 'email', 'phone', 'status'],
+    raw: true
   });
   const result = await Promise.all(
     users.map(async (user) => {
@@ -41,11 +33,11 @@ export const getRolesOfMember = (userId) => {
         model: db.RoleUser,
         attributes: [],
         where: {
-          userId,
-        },
-      },
+          userId
+        }
+      }
     ],
-    raw: true,
+    raw: true
   });
 };
 
@@ -68,25 +60,18 @@ export const getRolesByOrgId = async (orgId) => {
     include: [
       {
         model: db.RoleUser,
-        attributes: ["userId"],
-      },
+        attributes: ['userId']
+      }
     ],
-    raw: true,
+    raw: true
   });
 
   const roleWithAssignedMember = roles.reduce((prev, role) => {
     if (isNil(prev[role.id])) {
-      prev[role.id] = pick(role, [
-        "id",
-        "orgId",
-        "name",
-        "status",
-        "permissions",
-        "predefine",
-      ]);
+      prev[role.id] = pick(role, ['id', 'orgId', 'name', 'status', 'permissions', 'predefine']);
       prev[role.id].assigned = [];
     }
-    prev[role.id].assigned.push(role["RoleUsers.userId"]);
+    prev[role.id].assigned.push(role['RoleUsers.userId']);
     return prev;
   }, {});
 
@@ -96,18 +81,18 @@ export const getRolesByOrgId = async (orgId) => {
 export const getUserPermission = async (memberId, orgId) => {
   const result = await db.RoleUser.findAll({
     where: {
-      userId: memberId,
+      userId: memberId
     },
     include: [
       {
         model: db.Role,
-        attributes: ["permissions"],
+        attributes: ['permissions'],
         where: {
-          orgId,
-        },
-      },
+          orgId
+        }
+      }
     ],
-    raw: true,
+    raw: true
   });
 
   const userPerrmissions = result.reduce((res, role) => {
@@ -133,18 +118,18 @@ export const checkPermission = async (memberId, orgId, permissions) => {
 
 export const createMemberRole = (orgId) => ({
   orgId,
-  name: "MEMBER",
+  name: 'MEMBER',
   status: ORG_STATUS.ENABLE,
   permissions: MEMBER_PERMISSION,
-  predefine: true,
+  predefine: true
 });
 
 export const createAdminRole = (orgId) => ({
   orgId,
-  name: "ADMIN",
+  name: 'ADMIN',
   status: ORG_STATUS.ENABLE,
   permissions: ADMIN_PERMISSION,
-  predefine: true,
+  predefine: true
 });
 
 export const createNewOrg = async (user) => {
@@ -154,16 +139,13 @@ export const createNewOrg = async (user) => {
         {
           name: `${user.username}'s organization`,
           status: ORG_STATUS.ENABLE,
-          userId: user.id,
+          userId: user.id
         },
         { transaction: t }
       );
       const org = result.get({ plain: true });
 
-      await db.User.update(
-        { orgId: org.id },
-        { where: { id: user.id }, transaction: t }
-      );
+      await db.User.update({ orgId: org.id }, { where: { id: user.id }, transaction: t });
       await createPredefineRole(org.id, user.id, t);
 
       return null;
@@ -177,10 +159,7 @@ export const createNewOrg = async (user) => {
 };
 
 const createPredefineRole = async (orgId, userId, transaction) => {
-  const result = await db.Role.create(
-    { ...createAdminRole(orgId) },
-    { transaction }
-  );
+  const result = await db.Role.create({ ...createAdminRole(orgId) }, { transaction });
   const admin = result.get({ plain: true });
   await db.RoleUser.create({ userId, roleId: admin.id }, { transaction });
   await db.Role.create({ ...createMemberRole(orgId) }, { transaction });
@@ -195,8 +174,8 @@ export const assignRoleToMember = (roleId, userId) => {
     where: { roleId, userId },
     defaults: {
       roleId,
-      userId,
-    },
+      userId
+    }
   });
 };
 
@@ -206,4 +185,90 @@ export const unassignRoleFromMember = (roleId, userId) => {
 
 export const assignRoleToMembers = (roleId, userIds) => {
   return db.RoleUser.bulkCreate(userIds.map((userId) => ({ userId, roleId })));
+};
+
+export const inviteUser = async (email, orgId, res) => {
+  const org = await getOrgById(orgId);
+  const invitingUser = await db.User.findOne({ where: { email } });
+
+  if (!invitingUser) {
+    // Invite an user not exist in system
+    const token = jwt.sign({ email: email, orgId }, process.env.INVITE_SECRET);
+    const url = `${process.env.FRONTEND_URL}/dashboard/verify?token=${token}`;
+    const emailHtmlTemplate = mailService.generateInviteTemplate(url, org);
+
+    debug.log(NAMESPACE, `Invite a user not exist to org ${orgId}`);
+    mailService.sendMailWithHtml('Omini Channel Invite To Organization', email, emailHtmlTemplate);
+    return res.status(StatusCodes.OK).send({ message: 'Invite user success.' });
+  }
+
+  // Invite an user already exist
+  const isUserExistInOrg = await db.User.count({
+    where: {
+      id: invitingUser.id,
+      orgId: { [Op.ne]: null }
+    }
+  });
+  if (isUserExistInOrg) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .send({ message: 'User is already in an organization.' });
+  }
+
+  // Invite user to org
+  const token = jwt.sign({ email: email, orgId: orgId }, process.env.INVITE_SECRET);
+  const url = `${process.env.FRONTEND_URL}/dashboard/verify?token=${token}`;
+  const emailHtmlTemplate = mailService.generateInviteTemplate(url, org);
+
+  debug.log(NAMESPACE, `Invite a user id: ${invitingUser.id} to org ${orgId}`);
+  mailService.sendMailWithHtml('Omini Channel Invite To Organization', email, emailHtmlTemplate);
+  return res.status(StatusCodes.OK).send({ message: 'Invite user success.' });
+};
+
+export const verifyUser = async (loggedUser, token, res) => {
+  let userEmail, orgId;
+  try {
+    const obj = jwt.verify(token, process.env.INVITE_SECRET);
+    userEmail = obj.email;
+    orgId = obj.orgId;
+  } catch (err) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid token.' });
+  }
+
+  if (!userEmail || !orgId) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid token.' });
+  }
+
+  const invitingUser = await db.User.findOne({
+    where: {
+      email: userEmail
+    }
+  });
+
+  if (loggedUser.id !== invitingUser.id) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Different user.' });
+  }
+
+  // check if user in another org
+  const isUserExistInOrg = await checkIfUserInOrg(invitingUser.id);
+  if (isUserExistInOrg) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'User is already in an organization.' });
+  }
+
+  await db.User.update({ orgId }, { where: { email: userEmail } });
+
+  return res.status(StatusCodes.OK).send({ message: 'Joining organization success.' });
+};
+
+// ***** Private ***** //
+const checkIfUserInOrg = async (userId) => {
+  const isUserExistInOrg = await db.User.count({
+    where: {
+      id: userId,
+      orgId: { [Op.ne]: null }
+    }
+  });
+  return !!isUserExistInOrg;
 };
