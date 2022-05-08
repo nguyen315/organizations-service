@@ -12,7 +12,7 @@ const NAMESPACE = 'ORG-SERVICE'
 export const getMembersByOrgId = async (orgId) => {
   const users = await db.User.findAll({
     where: {
-      orgId
+      orgId,
     },
     attributes: ['id', 'username', 'firstName', 'lastName', 'email', 'phone', 'status'],
     raw: true,
@@ -33,9 +33,9 @@ export const getRolesOfMember = (userId) => {
         model: db.RoleUser,
         attributes: [],
         where: {
-          userId
-        }
-      }
+          userId,
+        },
+      },
     ],
     raw: true,
   })
@@ -81,24 +81,19 @@ export const getRolesByOrgId = async (orgId) => {
 export const getUserPermission = async (memberId, orgId) => {
   const result = await db.RoleUser.findAll({
     where: {
-      userId: memberId
+      userId: memberId,
     },
     include: [
       {
         model: db.Role,
         attributes: ['permissions'],
         where: {
-          orgId
-        }
-      }
+          orgId,
+        },
+      },
     ],
-<<<<<<< HEAD
     raw: true,
   })
-=======
-    raw: true
-  });
->>>>>>> b19fabedc701c1ade4f74435711d7457f31a60f1
 
   const userPerrmissions = result.reduce((res, role) => {
     const permissions = role.permissions
@@ -144,7 +139,7 @@ export const createNewOrg = async (user) => {
         {
           name: `${user.username}'s organization`,
           status: ORG_STATUS.ENABLE,
-          userId: user.id
+          userId: user.id,
         },
         { transaction: t }
       )
