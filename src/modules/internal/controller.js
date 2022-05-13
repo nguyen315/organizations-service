@@ -10,7 +10,7 @@ export const getOrgOwner = async (req, res) => {
     const orgOwner = await orgService.getOrgOwner(orgId)
     res.json(orgOwner)
   } catch (err) {
-    debug.log(NAMESPACE, 'Error while getting users of org ' + orgId, err)
+    debug.log(NAMESPACE, 'Error while getting users of org owner', err)
     return res.status(StatusCodes.BAD_REQUEST).json(err)
   }
 }

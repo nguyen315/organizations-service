@@ -191,8 +191,13 @@ export const assignRoleToMembers = (roleId, userIds) => {
 
 export const getOrgOwner = (orgId) => {
   return db.User.findOne({
-    where: { id: { $col: 'Organization.userId' } },
-    include: [{ model: db.Organization, attributes: [], where: { id: orgId } }],
+    include: [
+      {
+        model: db.Organization,
+        attributes: [],
+        where: { id: orgId, userId: { [Op.col]: 'User.id' } },
+      },
+    ],
   })
 }
 
