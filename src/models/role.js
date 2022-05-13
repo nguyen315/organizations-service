@@ -4,8 +4,8 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "Organizations",
-        key: "id",
+        model: 'Organizations',
+        key: 'id',
       },
     },
     name: {
@@ -30,9 +30,9 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
     },
-  };
+  }
 
-  const roleModel = sequelize.define("Role", schema);
+  const roleModel = sequelize.define('Role', schema)
 
-  return roleModel;
-};
+  return roleModel
+}

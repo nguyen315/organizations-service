@@ -1,9 +1,9 @@
-export * as REDIS_SERVICE_KEY from "./redis-service-key";
+export * as REDIS_SERVICE_KEY from './redis-service-key'
 
 export const ORG_STATUS = {
-  ENABLE: "ENABLE",
-  DISABLE: "DISABLE",
-};
+  ENABLE: 'ENABLE',
+  DISABLE: 'DISABLE',
+}
 
 export const MEMBER_PERMISSION = {
   // MEMBERS
@@ -26,7 +26,7 @@ export const MEMBER_PERMISSION = {
   CREATE_OR_EDIT_RULES_SET: true,
   VIEW_RULES_SET: true,
   DELETE_RULES_SET: true,
-};
+}
 
 export const ADMIN_PERMISSION = {
   // MEMBERS
@@ -49,4 +49,4 @@ export const ADMIN_PERMISSION = {
   CREATE_OR_EDIT_RULES_SET: true,
   DELETE_RULES_SET: true,
   VIEW_RULES_SET: true,
-};
+}

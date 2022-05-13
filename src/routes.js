@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import organizationsRoute from './modules/organization/organization.route';
-import internalRouter from './modules/internal/route';
+import { Router } from 'express'
+import organizationsRoute from './modules/organization/organization.route'
+import internalRouter from './modules/internal/route'
 
-const router = Router();
+const router = Router()
 
 router.use('/internal', internalRouter)
-router.use('/', organizationsRoute);
+router.use('/', organizationsRoute)
 
-export default router;
+export default router
