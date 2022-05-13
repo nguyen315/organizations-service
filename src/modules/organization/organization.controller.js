@@ -197,9 +197,16 @@ export const getUserPermission = async (req, res) => {
 
     const user = await db.User.findByPk(userId, { raw: true });
 
-    const permissions = await orgService.getUserPermission(userId, user.orgId);
-    return res.status(StatusCodes.OK).json({ permissions });
+    if (user.orgId) {
+      const permissions = await orgService.getUserPermission(
+        userId,
+        user.orgId
+      );
+      return res.status(StatusCodes.OK).json(permissions);
+    }
+    return res.status(StatusCodes.OK).json({});
   } catch (err) {
+    debug.log(NAMESPACE, err);
     return res.status(StatusCodes.BAD_REQUEST).json(err);
   }
 };

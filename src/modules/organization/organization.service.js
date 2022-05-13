@@ -105,13 +105,14 @@ export const getUserPermission = async (memberId, orgId) => {
         where: {
           orgId,
         },
+        raw: true,
       },
     ],
     raw: true,
   });
 
   const userPerrmissions = result.reduce((res, role) => {
-    const permissions = role.permissions;
+    const permissions = role["Role.permissions"];
     Object.keys(permissions).forEach((permission) => {
       if (isNil(res[permission])) {
         res[permission] = permissions[permission];
@@ -121,6 +122,7 @@ export const getUserPermission = async (memberId, orgId) => {
         }
       }
     });
+    return res;
   }, {});
 
   return userPerrmissions;
@@ -206,4 +208,11 @@ export const unassignRoleFromMember = (roleId, userId) => {
 
 export const assignRoleToMembers = (roleId, userIds) => {
   return db.RoleUser.bulkCreate(userIds.map((userId) => ({ userId, roleId })));
+};
+
+export const getOrgOwner = (orgId) => {
+  return db.User.findOne({
+    where: { id: { $col: "Organization.userId" } },
+    include: [{ model: db.Organization, attributes: [], where: { id: orgId } }],
+  });
 };

@@ -6,7 +6,6 @@ export const ORG_STATUS = {
 };
 
 export const MEMBER_PERMISSION = {
-    
   // MEMBERS
   VIEW_MEMBERS: false,
   DELETE_MEMBER: false,
@@ -25,6 +24,7 @@ export const MEMBER_PERMISSION = {
   VIEW_ADS: true,
   // RULES
   CREATE_OR_EDIT_RULES_SET: true,
+  VIEW_RULES_SET: true,
   DELETE_RULES_SET: true,
 };
 
@@ -48,4 +48,5 @@ export const ADMIN_PERMISSION = {
   // RULES
   CREATE_OR_EDIT_RULES_SET: true,
   DELETE_RULES_SET: true,
+  VIEW_RULES_SET: true,
 };
