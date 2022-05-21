@@ -3,11 +3,30 @@ import { StatusCodes } from 'http-status-codes'
 import db from 'src/models'
 import { ADMIN_PERMISSION, MEMBER_PERMISSION, ORG_STATUS } from 'src/shared/constant'
 import debug from 'src/utils/debug'
-import { Op } from 'sequelize'
+import { Op, fn } from 'sequelize'
 import jwt from 'jsonwebtoken'
 import * as mailService from 'src/utils/mailer'
 
 const NAMESPACE = 'ORG-SERVICE'
+
+export const getAll = () => {
+  return db.Organization.findAll({
+    include: [
+      {
+        model: db.User,
+        attributes: [['username', 'owner']],
+        where: {
+          id: { [Op.col]: 'Organization.userId' },
+        },
+      },
+    ],
+    raw: true,
+  })
+}
+
+export const updateName = (orgId, name) => {
+  return db.Organization.update({ name }, { where: { id: orgId } })
+}
 
 export const getMembersByOrgId = async (orgId) => {
   const users = await db.User.findAll({

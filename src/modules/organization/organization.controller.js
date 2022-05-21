@@ -1,13 +1,62 @@
 import { StatusCodes } from 'http-status-codes'
-import debug from 'src/utils/debug'
-import db from 'src/models'
-import * as orgService from './organization.service'
-import * as mailService from 'src/utils/mailer'
 import { isNumber } from 'lodash'
-import jwt from 'jsonwebtoken'
-import { Op } from 'sequelize'
+import db from 'src/models'
+import debug from 'src/utils/debug'
+import * as orgService from './organization.service'
 
 const NAMESPACE = 'ORG-CTRL'
+
+export const getAll = async (req, res) => {
+  try {
+    const orgs = await orgService.getAll()
+    return res.status(StatusCodes.OK).json(orgs)
+  } catch (err) {
+    debug.log(NAMESPACE, err)
+    return res.status(StatusCodes.BAD_REQUEST).json(err)
+  }
+}
+
+export const enableOrg = async (req, res) => {
+  try {
+    const { orgId } = req.params
+
+    await orgService.changeStatusOrg(orgId)
+    return res.status(StatusCodes.OK).send()
+  } catch (err) {
+    debug.log(NAMESPACE, err)
+    return res.status(StatusCodes.BAD_REQUEST).json(err)
+  }
+}
+
+export const disableOrg = async (req, res) => {
+  try {
+    const { orgId } = req.params
+
+    await orgService.changeStatusOrg(orgId, false)
+    return res.status(StatusCodes.OK).send()
+  } catch (err) {
+    debug.log(NAMESPACE, err)
+    return res.status(StatusCodes.BAD_REQUEST).json(err)
+  }
+}
+
+export const updateOrgName = async (req, res) => {
+  try {
+    const { orgId } = req.params
+    const { name, user, org } = req.body
+
+    if (user.id !== org.userId) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Only owner of organization can rename it.' })
+    }
+    await orgService.updateName(orgId, name)
+    return res.status(StatusCodes.OK).send()
+  } catch (err) {
+    debug.log(NAMESPACE, err)
+    return res.status(StatusCodes.BAD_REQUEST).json(err)
+  }
+}
 
 export const getMembersByOrgId = async (req, res) => {
   try {
