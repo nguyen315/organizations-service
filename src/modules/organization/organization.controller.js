@@ -20,7 +20,7 @@ export const enableOrg = async (req, res) => {
   try {
     const { orgId } = req.params
 
-    await orgService.changeStatusOrg(orgId)
+    await orgService.changeStatusOrg(orgId, true)
     return res.status(StatusCodes.OK).send()
   } catch (err) {
     debug.log(NAMESPACE, err)

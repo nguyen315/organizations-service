@@ -28,6 +28,13 @@ export const updateName = (orgId, name) => {
   return db.Organization.update({ name }, { where: { id: orgId } })
 }
 
+export const changeStatusOrg = (orgId, enable) => {
+  return db.Organization.update(
+    { status: enable ? ORG_STATUS.ENABLE : ORG_STATUS.DISABLE },
+    { where: { id: orgId } }
+  )
+}
+
 export const getMembersByOrgId = async (orgId) => {
   const users = await db.User.findAll({
     where: {
