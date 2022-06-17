@@ -20,6 +20,9 @@ const checkPermission = (role) => async (req, res, next) => {
 
 export const checkOrgEnable = async (req, res, next) => {
   const orgId = req.params.orgId
+  if (!orgId) {
+    return res.status(StatusCodes.FORBIDDEN).send(MESSAGE.PERMISSION_ERROR)
+  }
 
   const org = await getOrgById(orgId)
   if (org.status !== ORG_STATUS.ENABLE) {

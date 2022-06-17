@@ -22,7 +22,7 @@ router.post('/verify', checkOrgEnable, orgCtrl.verifyUser)
 router.post('/:orgId/invite', checkOrgEnable, orgCtrl.inviteUser)
 router.post('/:orgId/disable', checkPermission(ROLE.ADMIN), orgCtrl.disableOrg)
 router.post('/:orgId/enable', checkPermission(ROLE.ADMIN), orgCtrl.enableOrg)
-router.post('/', checkOrgEnable, orgCtrl.createNewOrg)
+router.post('/', orgCtrl.createNewOrg)
 router.get('/', checkPermission(ROLE.ADMIN), orgCtrl.getAll)
 
 export default router
