@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import { isNumber } from 'lodash'
 import db from 'src/models'
+import { ORG_STATUS } from 'src/shared/constant'
 import debug from 'src/utils/debug'
 import * as orgService from './organization.service'
 

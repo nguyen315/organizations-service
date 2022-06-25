@@ -1,4 +1,4 @@
-import { isNil, pick } from 'lodash'
+import { get, isNil, pick } from 'lodash'
 import { StatusCodes } from 'http-status-codes'
 import db from 'src/models'
 import { ADMIN_PERMISSION, MEMBER_PERMISSION, ORG_STATUS } from 'src/shared/constant'
@@ -9,19 +9,23 @@ import * as mailService from 'src/utils/mailer'
 
 const NAMESPACE = 'ORG-SERVICE'
 
-export const getAll = () => {
-  return db.Organization.findAll({
-    include: [
-      {
-        model: db.User,
-        attributes: [['username', 'owner']],
-        where: {
-          id: { [Op.col]: 'Organization.userId' },
-        },
-      },
-    ],
+export const getAll = async () => {
+  const orgs = await db.Organization.findAll({
     raw: true,
   })
+  const users = await db.User.findAll({
+    where: {
+      id: orgs.map((org) => org.userId),
+    },
+    raw: true,
+  })
+  return orgs.map((org) => ({
+    ...org,
+    owner: get(
+      users.find((user) => user.id === org.userId),
+      'username'
+    ),
+  }))
 }
 
 export const updateName = (orgId, name) => {
@@ -234,7 +238,8 @@ export const inviteUser = async (email, orgId, res) => {
   if (!invitingUser) {
     // Invite an user not exist in system
     const token = jwt.sign({ email: email, orgId }, process.env.INVITE_SECRET)
-    const url = `${process.env.FRONTEND_URL}/dashboard/verify?token=${token}`
+    const origin = process.env.DEFAULT_CLIENT_HOST || 'http://localhost:3000'
+    const url = `${origin}/dashboard/verify?token=${token}`
     const emailHtmlTemplate = mailService.generateInviteTemplate(url, org)
 
     debug.log(NAMESPACE, `Invite a user not exist to org ${orgId}`)
@@ -257,7 +262,9 @@ export const inviteUser = async (email, orgId, res) => {
 
   // Invite user to org
   const token = jwt.sign({ email: email, orgId: orgId }, process.env.INVITE_SECRET)
-  const url = `${process.env.FRONTEND_URL}/dashboard/verify?token=${token}`
+  const origin = process.env.DEFAULT_CLIENT_HOST || 'http://localhost:3000'
+
+  const url = `${origin}/dashboard/verify?token=${token}`
   const emailHtmlTemplate = mailService.generateInviteTemplate(url, org)
 
   debug.log(NAMESPACE, `Invite a user id: ${invitingUser.id} to org ${orgId}`)
